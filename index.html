@@ -1,0 +1,290 @@
+<head>
+  <style> body { margin: 0; } 
+.wrap {
+  position: relative;
+}
+
+.element {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+h1 {
+    color: white;
+    font-size: 17;
+    font-family:  Courier, Helvetica, Arial;
+    font-style: normal;
+    display: inline-block;
+    position: absolute;
+}
+
+#d {position: absolute; width : 10% ; height : 10%; top: 0;
+  left: 0;}
+
+</style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/89/three.min.js"></script>
+  <script src="https://unpkg.com/three-trackballcontrols-web/dist/three-trackballcontrols.min.js"></script>
+  <script src="https://unpkg.com/three-forcegraph"></script>
+  <script src="scriptForceGraph.js"></script>
+
+</head>
+
+<body>
+  <div class="wrap">
+  <div id="3d-graph"></div>
+  <div class="element" id="questions"> </div>
+  <div id="d">
+    <input type="button" value="Ecrire" id="newPost"> 
+    <textarea rows="30" cols="50" id="myPost" style="display:none" value=""></textarea> 
+    <input type="button" value="Envoyer"  style="display:none" id="sent">
+  </div>
+    <!-- <h1>Not Earth</h1> -->
+</div>
+
+  <script>
+
+
+    initData = { "nodes":
+   [{"id":"Node 0","label": "Jacques Derrida","group":2, "value": 15},
+    {"id":"Node 1","label": "Ludwig Binswanger","group":2, "value": 10},
+   {"id":"Node 2", "label": "Walter Benjamin","group":2, "value": 5},
+   {"id":"Node 3", "label": "Hello world", "group":2, "value": 5},
+   {"id":"Node 4", "label": "Marcel Duchamp", "group":2, "value": 1},
+   {"id":"Node 5", "label": "Symphonie Monoton, les 100 ans", "group":2, "value": 1},
+   {"id":"Node 6", "label": "L'aura d'une oeuvre d'art est-elle intrinseque a son medium?", "group":2, "value": 1},
+   {"id":"Node 7", "label": "Que pensez-vous de l'anthroposophie?", "group":2, "value": 1},
+   {"id":"Node 8", "label": "La raison computationnelle determine t-elle une nouvelle historicite?", "group":2, "value": 1},
+   {"id":"Node 9", "label": "La memoire 2.0 est-elle le reflet de l'Homme postmoderne?", "group":2, "value": 1},
+   {"id":"Node 10","group":2, "label": "Scorpio",  "value": 1},
+   {"id":"Node 11","group":2, "label": "Venus", "value": 1},
+   {"id":"Node 12","group":4, "label": "Alien", "value": 1},
+   {"id":"Node 13", "label": "Moon", "group":4, "value": 10},
+   {"id":"Node 14", "label": "Not Earth", "group":5, "value": 20},
+   {"id":"Node 15", "label": "Franck Assedou", "group":3, "value": 15},
+   {"id":"Node 16", "label": "Emilien Fugier", "group":3, "value": 15},
+   {"id":"Node 17", "label": "Ninon Lize Masclef", "group":3, "value": 15},
+],
+   
+   "links":
+   [{"source":"Node 0","target":"Node 1","value":"5"},
+   {"source":"Node 1","target":"Node 5","value":"5"},
+   {"source":"Node 2","target":"Node 1","value":"5"},
+   {"source":"Node 3","target":"Node 2","value":"5"},
+   {"source":"Node 3","target":"Node 1","value":"5"},
+   {"source":"Node 3","target":"Node 5","value":"5"},
+   {"source":"Node 4","target":"Node 3","value":"5"},
+   {"source":"Node 4","target":"Node 8","value":"5"},
+   {"source":"Node 5","target":"Node 8","value":"5"},
+   {"source":"Node 6","target":"Node 9","value":"5"},
+   {"source":"Node 7","target":"Node 3","value":"5"},
+   {"source":"Node 8","target":"Node 10","value":"5"},
+   {"source":"Node 9","target":"Node 10","value":"5"},
+   {"source":"Node 9","target":"Node 7","value":"5"},
+   {"source":"Node 10","target":"Node 12","value":"20"},
+   {"source":"Node 11","target":"Node 7","value":"5"},
+   {"source":"Node 13","target":"Node 14","value":"5"},
+   {"source":"Node 15","target":"Node 16","value":"5"},
+   {"source":"Node 15","target":"Node 17","value":"5"},
+   {"source":"Node 17","target":"Node 16","value":"5"}
+]
+   }
+
+
+
+
+
+    
+    // Gen random data
+    const N = 300;
+    var ww = window.innerWidth,
+    wh = window.innerHeight;
+
+    var material =new THREE.MeshPhongMaterial(); // { ambient: 0x050505, color: 0xffffff, specular: 0x555555, shininess: 30 }
+
+    var light = new THREE.DirectionalLight( 0xffffff ); // meshPhongRendering 
+    light.position.set( 0, 1, 1 ).normalize();
+
+
+    // material.emissive = new THREE.Color( 0, 0, 0 ); 
+    var spriteMaterial = new THREE.SpriteMaterial( 
+  { 
+    map: new THREE.TextureLoader().load( 'lens.png' ), 
+    useScreenCoordinates: false, //alignment: THREE.SpriteAlignment.center,
+    color: 0x0000ff, transparent: false, blending: THREE.AdditiveBlending
+  });
+
+    function createSprite(radius){
+      var sprite = new THREE.Sprite( spriteMaterial );
+      sprite.scale.set(50+radius*2, 50+radius*2, 1.0);
+      return sprite;
+    }
+
+    function createSphere(radius){
+      var sphere =  new THREE.SphereGeometry(Math.cbrt(radius), 32, 32);
+      return sphere;
+
+    }
+
+    function addLabel(radius, label, counter,distance){
+      var lab= document.createElement("H1");
+     /*   lab.style.fontSize=radius* 1.5;*/
+     lab.style.fontSize=distance*5;
+        lab.innerHTML = label;      
+        lab.id="lab"+counter;  
+        lab.style.top=0;    
+        lab.style.left=0;     
+        // la taille de police est proportionnelle au radius % la profondeur              
+        document.getElementById("questions").appendChild(lab);
+    }
+
+    function createMesh(radius, label, distance){
+      console.log("val=", radius);
+      console.log("lab=", label);
+      console.log("count=", counter);
+      console.log("distance=", distance);
+      if(label) addLabel(radius, label, counter,distance);
+
+      var sphere = createSphere(radius);
+      var mesh = new THREE.Mesh(
+          sphere, material)
+          .add(createSprite(distance)); //radius
+
+/*
+    vector = sphere.vertices[0].clone();
+    vector.applyMatrix4(mesh.matrix);
+    vector.project(camera);
+    vector.x = (vector.x * ww/2) + ww/2;
+    vector.y = -(vector.y * wh/2) + wh/2; 
+
+     document.querySelectorAll(".element")[0].style.webkitTransform = "translate("+vector.x+"px,"+vector.y+"px)";
+    document.querySelectorAll(".element")[0].style.transform = "translate("+vector.x+"px,"+vector.y+"px)";  */
+    counter++;
+
+
+      return mesh;
+    }
+  // var sprite = new THREE.Sprite( spriteMaterial );
+     // .scale.x=30,
+    // .scale.y=20
+    // .scale.z=1.0
+  // set==scale(50, 50, 1.0);
+  // console.log("sp", sprite.scale);
+  // sprite.scale.set(50, 50);
+
+    console.log("mat", material);
+
+    var counter=0;
+ 
+  const Graph = new ThreeForceGraph()
+          // .nodeAutoColorBy('group')
+          .nodeColor(0xbbbbbb)
+          // .nodeResolution(20)
+          .nodeOpacity(1)
+          .nodeThreeObject(d => createMesh(d.value, d.label,d.group))
+          .linkColor(0xbbbbbb)
+          .graphData(initData);
+          // .jsonUrl('miserables.json ');
+
+
+ // Ajout d'un noeud ! marche !
+  console.log("ICI", Graph.graphData().nodes);
+var data= {"id":"Node 18","label": "Ludw","group":3, "value": 20};
+// manque l'ajout du label
+ // Graph.graphData().nodes.push(data);
+  console.log("ICI2", Graph.graphData().nodes);
+
+  function addNode(data){
+    Graph.graphData().nodes.push(data);
+    console.log("group", data.group);
+  }
+
+  addNode(data);
+
+  
+
+         
+
+    // Setup renderer
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('3d-graph').appendChild(renderer.domElement);
+
+    // Setup scene
+    const scene = new THREE.Scene();
+    scene.add(Graph);
+    scene.add(light); // MeshPhong rendering
+    scene.add(new THREE.AmbientLight(0xbbbbbb));
+    
+
+    // Setup camera
+    const camera = new THREE.PerspectiveCamera();
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    camera.lookAt(Graph.position);
+    camera.position.z = Math.cbrt(N) * 100;
+
+    // Add camera controls
+    const tbControls = new TrackballControls(camera, renderer.domElement);
+
+    var moveDom = function(){
+
+    if(Graph.children.length){
+
+      for(var i=0; i<Graph.children.length; i++){
+        vector = new THREE.Vector3();
+        vector.x=Graph.children[i].__data.vx;
+        vector.y=Graph.children[i].__data.vy;
+        vector.z=Graph.children[i].__data.vz
+      
+        vector.setFromMatrixPosition(Graph.children[i].matrix);
+        vector.project(camera);
+        vector.x = (vector.x * ww/2) + ww/2;
+        vector.y = -(vector.y * wh/2) + wh/2; 
+      
+
+        vectorNew= new THREE.Vector3();
+        vectorNew.x= Graph.children[i].__data.vx;
+        vectorNew.y= Graph.children[i].__data.vy;
+        vectorNew.z= Graph.children[i].__data.vz;
+        var factor=1- vectorNew.distanceTo(camera.position)/camera.far;
+        if(factor<0) factor=0;
+
+        
+        document.getElementById("lab"+i).style.webkitTransform = "translate("+vector.x+"px,"+vector.y+"px) scale("+2*factor+")";
+        document.getElementById("lab"+i).style.transform = "translate("+vector.x+"px,"+vector.y+"px) scale("+2*factor+")"; 
+
+      }
+    }
+}; 
+
+    // Kick-off renderer
+    (function animate() { // IIFE
+      Graph.tickFrame();
+
+      
+
+      // Frame cycle
+      tbControls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+
+      moveDom();
+
+       // console.log("graphe=", Graph.children[1].__data.label); 
+       // console.log("graphe=", Graph.children[2].__data.y); 
+       // console.log("graphe=", Graph.children[0].geometry.__directGeometry.vertices[0]);
+    })();
+
+   
+
+    
+
+  </script>
+
+
+</body>
